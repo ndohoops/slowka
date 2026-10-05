@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Słówka">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#161A26">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Słówka — Polish Flashcards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dusk:#161A26;
+  --dusk-2:#1F2434;
+  --dusk-3:#2A3145;
+  --amber:#E29B3F;
+  --amber-light:#F4C374;
+  --amber-dim:#8a6a3a;
+  --amber-mid:#D9A54A;
+  --parchment:#F3ECDD;
+  --parchment-2:#EAE1CC;
+  --rose:#C0524A;
+  --sage:#6FA287;
+  --ink:#12151F;
+  --slate:#8891A3;
+  --slate-light:#B7BFCE;
+  --border:#333c54;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--dusk);
+  color:var(--parchment);
+  font-family:'Inter',sans-serif;
+  overflow:hidden;
+  position:fixed;
+  inset:0;
+}
+#app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  max-width:560px;
+  margin:0 auto;
+  position:relative;
+  background:
+    radial-gradient(ellipse 600px 300px at 50% -10%, rgba(226,155,63,0.10), transparent 60%),
+    var(--dusk);
+}
+.serif{font-family:'Fraunces',serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+header{
+  padding: calc(14px + var(--safe-top)) 20px 12px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+header .brand{display:flex; align-items:baseline; gap:8px;}
+header h1{
+  font-family:'Fraunces',serif;
+  font-weight:700;
+  font-size:26px;
+  letter-spacing:-0.02em;
+  margin:0;
+  color:var(--amber-light);
+}
+.streak{display:flex; align-items:center; gap:5px; font-size:13px; color:var(--amber-light); font-weight:600;}
+.streak svg{width:15px;height:15px;}
+
+main{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding: 18px 20px calc(28px + var(--safe-bottom));
+}
+.view{display:none;}
+.view.active{display:block; animation:fadein .22s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+h2.section-title{
+  font-family:'Fraunces',serif;
+  font-size:21px;
+  font-weight:600;
+  margin: 4px 0 14px;
+  color:var(--parchment);
+}
+p.hint{color:var(--slate); font-size:13.5px; line-height:1.5; margin:0 0 16px;}
+
+.segmented{
+  display:flex;
+  flex-wrap:wrap;
+  background:var(--dusk-2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:3px;
+  gap:3px;
+  margin-bottom:14px;
+}
+.segmented button{
+  flex:1 1 44%;
+  border:none;
+  background:transparent;
+  color:var(--slate-light);
+  font-family:'Inter',sans-serif;
+  font-size:11.5px;
+  font-weight:600;
+  padding:9px 4px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:background .15s, color .15s;
+  white-space:nowrap;
+}
+.segmented button.active{background:var(--amber); color:var(--ink);}
+
+.field-label-row{font-size:11px; color:var(--amber-dim); text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin:2px 0 6px;}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.chip{
+  padding:7px 13px; border-radius:999px; border:1px solid var(--border);
+  background:var(--dusk-2); color:var(--slate-light); font-size:12.5px; font-weight:500;
+  cursor:pointer; user-select:none; transition:all .15s;
+}
+.chip.active{background:rgba(226,155,63,0.16); border-color:var(--amber); color:var(--amber-light);}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  border:none; border-radius:14px;
+  font-family:'Inter',sans-serif; font-weight:700; font-size:14.5px;
+  padding:14px 12px;
+  cursor:pointer;
+  transition:transform .1s, opacity .15s;
+  width:100%;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--amber); color:var(--ink);}
+.btn-secondary{background:var(--dusk-3); color:var(--parchment); border:1px solid var(--border);}
+.btn-ghost{background:transparent; color:var(--slate-light); border:1px solid var(--border);}
+.btn-rose{background:var(--rose); color:#fff;}
+.btn-sage{background:var(--sage); color:var(--ink);}
+.btn-amber{background:var(--amber-mid); color:var(--ink);}
+.btn:disabled{opacity:.4; cursor:default;}
+.btn-row{display:flex; gap:10px;}
+
+.small-note{font-size:11.5px; color:var(--slate); line-height:1.5; margin:-4px 0 16px;}
+
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;}
+.stat-box{background:var(--dusk-2); border:1px solid var(--border); border-radius:14px; padding:16px;}
+.stat-box .num{font-family:'Fraunces',serif; font-size:28px; font-weight:700; color:var(--amber-light);}
+.stat-box .label{font-size:11.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+
+.word-row{display:flex; align-items:center; gap:10px; padding:12px 4px; border-bottom:1px solid var(--border);}
+.word-row .txt{flex:1; min-width:0;}
+.word-row .en{font-size:14.5px; color:var(--parchment); font-weight:500;}
+.word-row .pl{font-size:13px; color:var(--amber-light); font-family:'JetBrains Mono',monospace; margin-top:1px;}
+.word-row .phon{font-size:11px; color:var(--slate); font-family:'JetBrains Mono',monospace; margin-top:1px;}
+.icon-btn{
+  width:32px; height:32px; flex-shrink:0; border-radius:10px; border:1px solid var(--border);
+  background:var(--dusk-3); color:var(--slate-light);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.icon-btn svg{width:15px;height:15px;}
+.icon-btn.on{background:rgba(226,155,63,0.18); border-color:var(--amber); color:var(--amber-light);}
+
+.category-group{margin-bottom:6px;}
+.category-heading{
+  font-size:11px; color:var(--amber-dim); text-transform:uppercase; letter-spacing:.06em;
+  font-weight:700; margin:18px 0 4px; padding-bottom:6px; border-bottom:1px solid var(--border);
+}
+
+.conj-panel{
+  background:var(--dusk-2); border:1px solid var(--border); border-radius:12px;
+  padding:12px 14px; margin:2px 0 10px; font-size:13px;
+}
+.conj-row{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:5px 0; color:var(--slate-light);}
+.conj-row .p{color:var(--slate); font-size:11.5px; flex-shrink:0;}
+.conj-row .f{font-family:'JetBrains Mono',monospace; color:var(--amber-light); font-weight:600; flex:1; text-align:right; margin-right:2px;}
+.icon-btn-sm{width:26px; height:26px; flex-shrink:0; border-radius:8px; border:1px solid var(--border); background:var(--dusk-3); color:var(--slate-light); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+.icon-btn-sm svg{width:12px;height:12px;}
+
+.empty-state{text-align:center; padding:40px 20px; color:var(--slate);}
+.empty-state .glyph{font-family:'Fraunces',serif; font-size:44px; color:var(--amber-dim); margin-bottom:8px;}
+.empty-state p{font-size:13.5px; line-height:1.5;}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; color:var(--slate); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+.field input, .field select{
+  width:100%; background:var(--dusk-2); border:1px solid var(--border); border-radius:12px;
+  padding:13px 14px; color:var(--parchment); font-family:'Inter',sans-serif; font-size:15.5px;
+}
+.field input:focus, .field select:focus{outline:none; border-color:var(--amber);}
+.field input::placeholder{color:#5b6478;}
+.checkbox-field{display:flex; align-items:center; gap:10px; margin-bottom:14px; padding:12px 14px; background:var(--dusk-2); border:1px solid var(--border); border-radius:12px;}
+.checkbox-field input{width:18px; height:18px; accent-color:var(--amber);}
+.checkbox-field label{font-size:13.5px; color:var(--parchment); font-weight:500;}
+.conj-inputs{display:none; border-left:2px solid var(--amber-dim); padding-left:12px; margin-bottom:8px;}
+.conj-inputs.show{display:block;}
+.conj-inputs .field label{font-size:11px;}
+
+.start-panel{background:var(--dusk-2); border:1px solid var(--border); border-radius:16px; padding:18px; margin-top:4px;}
+.due-count{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+.due-count .n{font-family:'Fraunces',serif; font-size:32px; font-weight:700; color:var(--amber-light);}
+.due-count .l{font-size:12px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; max-width:130px; text-align:right; line-height:1.4;}
+
+.progress-track{height:5px; background:var(--dusk-3); border-radius:99px; overflow:hidden; margin-bottom:20px;}
+.progress-fill{height:100%; background:var(--amber); transition:width .3s ease;}
+
+.card-stage{perspective:1400px; margin:6px 0 20px;}
+.card-inner{
+  position:relative; width:100%; aspect-ratio:4/5; max-height:56vh;
+  transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,.2,.2,1); cursor:pointer;
+}
+.card-inner.flipped{transform:rotateY(180deg);}
+.card-face{
+  position:absolute; inset:0; border-radius:22px; backface-visibility:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:22px; text-align:center; background:var(--parchment); color:var(--ink);
+  box-shadow:0 14px 34px rgba(0,0,0,.35), 0 0 0 1px rgba(226,155,63,0.25);
+  overflow-y:auto;
+}
+.card-face.back{transform:rotateY(180deg); background:var(--parchment-2);}
+.card-eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--amber-dim); font-weight:700; margin-bottom:12px;}
+.card-word{font-family:'Fraunces',serif; font-size:clamp(24px, 6.6vw, 34px); font-weight:600; line-height:1.15; color:var(--ink);}
+.card-phon{font-family:'JetBrains Mono',monospace; font-size:14px; color:#8a7f66; margin-top:8px; letter-spacing:.02em;}
+.card-sub{font-size:13px; color:#8a7f66; margin-top:10px;}
+.card-target{
+  margin-top:10px; font-size:13.5px; font-weight:700; color:var(--rose);
+  background:rgba(192,82,74,0.1); padding:5px 12px; border-radius:999px;
+}
+.stamp{
+  position:absolute; top:12px; right:12px; width:48px; height:48px; border-radius:50%;
+  border:2px solid rgba(192,82,74,0.55); display:flex; align-items:center; justify-content:center;
+  transform:rotate(11deg); color:rgba(192,82,74,0.65); font-family:'Fraunces',serif; font-weight:700; font-size:20px; opacity:.85;
+}
+.speak-btn{
+  margin-top:16px; width:50px; height:50px; border-radius:50%; background:var(--ink); color:var(--amber-light);
+  border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 6px 14px rgba(0,0,0,.25); flex-shrink:0;
+}
+.speak-btn svg{width:20px; height:20px;}
+.speak-btn:active{transform:scale(0.94);}
+.speak-row{display:flex; gap:10px; align-items:center; margin-top:14px;}
+.speak-slow{font-size:11px; color:#8a7f66; border:1px solid #c9bd9e; background:transparent; border-radius:999px; padding:6px 12px; cursor:pointer; font-weight:600;}
+.tap-hint{font-size:11px; color:#a89a78; margin-top:14px; letter-spacing:.02em;}
+.invented-tag{font-size:10.5px; color:#a89a78; margin-top:8px; font-style:italic;}
+
+.conj-mini{width:100%; margin-top:14px; font-size:12px; border-top:1px solid #ddd0ac; padding-top:10px;}
+.conj-mini-row{display:flex; justify-content:space-between; padding:3px 2px; color:#7a6f57;}
+.conj-mini-row.target{color:var(--rose); font-weight:700; background:rgba(192,82,74,0.08); border-radius:6px;}
+
+.judge-row{display:flex; gap:8px;}
+.judge-row .btn{flex:1; padding:14px 6px; font-size:13px;}
+
+.session-end{text-align:center; padding:30px 10px;}
+.session-end .glyph{font-family:'Fraunces',serif; font-size:52px; color:var(--amber-light); margin-bottom:6px;}
+.session-end .score{font-size:14.5px; color:var(--slate-light); margin-bottom:26px; line-height:1.6;}
+
+nav.tabbar{
+  flex-shrink:0; display:flex; border-top:1px solid var(--border);
+  background:rgba(31,36,52,0.92); backdrop-filter:blur(10px);
+  padding: 8px 6px calc(8px + var(--safe-bottom));
+}
+nav.tabbar button{
+  flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:6px 2px; color:var(--slate); font-size:10.5px; font-weight:600; cursor:pointer; letter-spacing:.01em;
+}
+nav.tabbar button svg{width:21px; height:21px;}
+nav.tabbar button.active{color:var(--amber-light);}
+
+.search-box{
+  display:flex; align-items:center; gap:8px; background:var(--dusk-2); border:1px solid var(--border);
+  border-radius:12px; padding:11px 14px; margin-bottom:14px;
+}
+.search-box svg{width:16px; height:16px; color:var(--slate); flex-shrink:0;}
+.search-box input{flex:1; background:none; border:none; outline:none; color:var(--parchment); font-size:14.5px; font-family:'Inter',sans-serif;}
+
+#toast{
+  position:absolute; left:50%; bottom:90px; transform:translateX(-50%) translateY(20px);
+  background:var(--dusk-3); color:var(--parchment); border:1px solid var(--amber);
+  padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600;
+  opacity:0; pointer-events:none; transition:all .25s ease; white-space:nowrap; z-index:50; max-width:88%; text-align:center;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+main::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="brand"><h1>Słówka</h1></div>
+    <div class="streak" id="streakDisplay">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-3 4-3 8a3 3 0 006 0c1.5 1 2 3 2 4.5A5.5 5.5 0 016 14.5C6 8 12 6 12 2z"/></svg>
+      <span id="streakNum">0</span>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ PRACTICE VIEW ============ -->
+    <section class="view active" id="view-practice">
+      <div id="practiceStart">
+        <h2 class="section-title">Practice</h2>
+
+        <div class="segmented" id="modeSegment">
+          <button data-mode="en-pl" class="active">EN → PL</button>
+          <button data-mode="pl-en">PL → EN</button>
+          <button data-mode="pron">Say it</button>
+          <button data-mode="conj">Conjugate</button>
+        </div>
+        <p class="small-note" id="modeExplain">English word first, then flip to see the Polish translation and hear it.</p>
+
+        <div class="field-label-row">Verb forms to include</div>
+        <p class="small-note" style="margin-top:0;">Verbs appear as separate cards for each form you select — e.g. "I speak" and "she speaks" become their own cards.</p>
+        <div class="chips" id="verbFormChips"></div>
+
+        <div class="field-label-row">Categories</div>
+        <div class="chips" id="categoryChips"></div>
+
+        <div class="start-panel">
+          <div class="due-count">
+            <div><div class="n" id="dueNum">0</div></div>
+            <div class="l">cards ready in this session</div>
+          </div>
+          <button class="btn btn-primary" id="startSessionBtn">Start session</button>
+        </div>
+        <p class="small-note" style="margin-top:14px;">Phonetic spellings are simplified, English-based approximations — a helpful guide, not formal IPA. Real audio is the better teacher.</p>
+      </div>
+
+      <div id="practiceSession" style="display:none;"></div>
+    </section>
+
+    <!-- ============ WORDS VIEW ============ -->
+    <section class="view" id="view-words">
+      <h2 class="section-title">Word bank</h2>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="wordSearch" placeholder="Search English or Polish…">
+      </div>
+      <div class="chips" id="wordFilterChips"></div>
+      <p class="small-note">Tap the table icon next to a verb to see its full conjugation.</p>
+      <div id="wordList"></div>
+    </section>
+
+    <!-- ============ ADD VIEW ============ -->
+    <section class="view" id="view-add">
+      <h2 class="section-title">Add a word</h2>
+      <p class="hint">Add your own vocabulary. It's saved on this device and included in practice automatically.</p>
+      <div class="field">
+        <label>English</label>
+        <input type="text" id="addEn" placeholder="e.g. window" autocapitalize="none">
+      </div>
+      <div class="field">
+        <label>Polish</label>
+        <input type="text" id="addPl" placeholder="e.g. okno" autocapitalize="none">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <input type="text" id="addCat" list="catList" placeholder="e.g. Home, Work, Slang…">
+        <datalist id="catList"></datalist>
+      </div>
+
+      <div class="checkbox-field">
+        <input type="checkbox" id="addIsVerb">
+        <label for="addIsVerb">This is a verb — add conjugations</label>
+      </div>
+      <div class="conj-inputs" id="conjInputs">
+        <p class="small-note" style="margin-top:0;">The Polish field above is the infinitive. Fill in present-tense forms below (leave blank to skip).</p>
+        <div class="field"><label>ja (I)</label><input type="text" id="conjJa" placeholder="e.g. mówię"></div>
+        <div class="field"><label>ty (you)</label><input type="text" id="conjTy" placeholder="e.g. mówisz"></div>
+        <div class="field"><label>on/ona/ono (he/she/it)</label><input type="text" id="conjOn" placeholder="e.g. mówi"></div>
+        <div class="field"><label>my (we)</label><input type="text" id="conjMy" placeholder="e.g. mówimy"></div>
+        <div class="field"><label>wy (you all)</label><input type="text" id="conjWy" placeholder="e.g. mówicie"></div>
+        <div class="field"><label>oni/one (they)</label><input type="text" id="conjOni" placeholder="e.g. mówią"></div>
+      </div>
+
+      <button class="btn btn-primary" id="saveWordBtn">Save word</button>
+    </section>
+
+    <!-- ============ PROGRESS VIEW ============ -->
+    <section class="view" id="view-progress">
+      <h2 class="section-title">Progress</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Total words</div></div>
+        <div class="stat-box"><div class="num" id="statMastered">0</div><div class="label">Mastered</div></div>
+        <div class="stat-box"><div class="num" id="statCustom">0</div><div class="label">Your words</div></div>
+        <div class="stat-box"><div class="num" id="statStreak">0</div><div class="label">Day streak</div></div>
+      </div>
+      <p class="hint">A word is "mastered" once "Got it" has been marked five times running. "Study more" resets it; "Almost" keeps its place but brings it back for review soon.</p>
+      <button class="btn btn-ghost" id="resetProgressBtn">Reset all progress</button>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="practice">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="16" rx="2" transform="rotate(-8 10 13)"/><rect x="7" y="3" width="14" height="16" rx="2" fill="var(--dusk-2)"/></svg>
+      Practice
+    </button>
+    <button class="tab-btn" data-view="words">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V4H6.5A2.5 2.5 0 004 6.5v13z"/><path d="M4 19.5A2.5 2.5 0 016.5 22H20"/></svg>
+      Words
+    </button>
+    <button class="tab-btn" data-view="add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      Add
+    </button>
+    <button class="tab-btn" data-view="progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+      Progress
+    </button>
+  </nav>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= BUILT-IN WORD BANK ================= */
+const BUILTIN_WORDS = [
+  {id:'b1',en:'Hello',pl:'Cześć',category:'Greetings'},
+  {id:'b2',en:'Good morning',pl:'Dzień dobry',category:'Greetings'},
+  {id:'b3',en:'Good evening',pl:'Dobry wieczór',category:'Greetings'},
+  {id:'b4',en:'Good night',pl:'Dobranoc',category:'Greetings'},
+  {id:'b5',en:'Goodbye',pl:'Do widzenia',category:'Greetings'},
+  {id:'b6',en:'Please',pl:'Proszę',category:'Greetings'},
+  {id:'b7',en:'Thank you',pl:'Dziękuję',category:'Greetings'},
+  {id:'b8',en:'Yes',pl:'Tak',category:'Greetings'},
+  {id:'b9',en:'No',pl:'Nie',category:'Greetings'},
+  {id:'b10',en:'Sorry / Excuse me',pl:'Przepraszam',category:'Greetings'},
+  {id:'b11',en:'How are you?',pl:'Jak się masz?',category:'Greetings'},
+  {id:'b12',en:'My name is…',pl:'Nazywam się…',category:'Greetings'},
+  {id:'b13',en:'Nice to meet you',pl:'Miło mi Cię poznać',category:'Greetings'},
+  {id:'b14',en:'One',pl:'Jeden',category:'Numbers'},
+  {id:'b15',en:'Two',pl:'Dwa',category:'Numbers'},
+  {id:'b16',en:'Three',pl:'Trzy',category:'Numbers'},
+  {id:'b17',en:'Four',pl:'Cztery',category:'Numbers'},
+  {id:'b18',en:'Five',pl:'Pięć',category:'Numbers'},
+  {id:'b19',en:'Six',pl:'Sześć',category:'Numbers'},
+  {id:'b20',en:'Seven',pl:'Siedem',category:'Numbers'},
+  {id:'b21',en:'Eight',pl:'Osiem',category:'Numbers'},
+  {id:'b22',en:'Nine',pl:'Dziewięć',category:'Numbers'},
+  {id:'b23',en:'Ten',pl:'Dziesięć',category:'Numbers'},
+  {id:'b24',en:'Twenty',pl:'Dwadzieścia',category:'Numbers'},
+  {id:'b25',en:'Hundred',pl:'Sto',category:'Numbers'},
+  {id:'b26',en:'Mother',pl:'Matka',category:'Family'},
+  {id:'b27',en:'Father',pl:'Ojciec',category:'Family'},
+  {id:'b28',en:'Sister',pl:'Siostra',category:'Family'},
+  {id:'b29',en:'Brother',pl:'Brat',category:'Family'},
+  {id:'b30',en:'Grandmother',pl:'Babcia',category:'Family'},
+  {id:'b31',en:'Grandfather',pl:'Dziadek',category:'Family'},
+  {id:'b32',en:'Son',pl:'Syn',category:'Family'},
+  {id:'b33',en:'Daughter',pl:'Córka',category:'Family'},
+  {id:'b34',en:'Wife',pl:'Żona',category:'Family'},
+  {id:'b35',en:'Husband',pl:'Mąż',category:'Family'},
+  {id:'b36',en:'Family',pl:'Rodzina',category:'Family'},
+  {id:'b37',en:'Friend (male)',pl:'Przyjaciel',category:'Family'},
+  {id:'b38',en:'Friend (female)',pl:'Przyjaciółka',category:'Family'},
+  {id:'b39',en:'Bread',pl:'Chleb',category:'Food & Drink'},
+  {id:'b40',en:'Water',pl:'Woda',category:'Food & Drink'},
+  {id:'b41',en:'Milk',pl:'Mleko',category:'Food & Drink'},
+  {id:'b42',en:'Coffee',pl:'Kawa',category:'Food & Drink'},
+  {id:'b43',en:'Tea',pl:'Herbata',category:'Food & Drink'},
+  {id:'b44',en:'Apple',pl:'Jabłko',category:'Food & Drink'},
+  {id:'b45',en:'Egg',pl:'Jajko',category:'Food & Drink'},
+  {id:'b46',en:'Cheese',pl:'Ser',category:'Food & Drink'},
+  {id:'b47',en:'Soup',pl:'Zupa',category:'Food & Drink'},
+  {id:'b48',en:'Meat',pl:'Mięso',category:'Food & Drink'},
+  {id:'b49',en:'Chicken',pl:'Kurczak',category:'Food & Drink'},
+  {id:'b50',en:'Potato',pl:'Ziemniak',category:'Food & Drink'},
+  {id:'b51',en:'Sugar',pl:'Cukier',category:'Food & Drink'},
+  {id:'b52',en:'Beer',pl:'Piwo',category:'Food & Drink'},
+  {id:'b53',en:'Today',pl:'Dzisiaj',category:'Time & Days'},
+  {id:'b54',en:'Tomorrow',pl:'Jutro',category:'Time & Days'},
+  {id:'b55',en:'Yesterday',pl:'Wczoraj',category:'Time & Days'},
+  {id:'b56',en:'Monday',pl:'Poniedziałek',category:'Time & Days'},
+  {id:'b57',en:'Tuesday',pl:'Wtorek',category:'Time & Days'},
+  {id:'b58',en:'Wednesday',pl:'Środa',category:'Time & Days'},
+  {id:'b59',en:'Thursday',pl:'Czwartek',category:'Time & Days'},
+  {id:'b60',en:'Friday',pl:'Piątek',category:'Time & Days'},
+  {id:'b61',en:'Saturday',pl:'Sobota',category:'Time & Days'},
+  {id:'b62',en:'Sunday',pl:'Niedziela',category:'Time & Days'},
+  {id:'b63',en:'Week',pl:'Tydzień',category:'Time & Days'},
+  {id:'b64',en:'Year',pl:'Rok',category:'Time & Days'},
+  {id:'b65',en:'To be',pl:'Być',category:'Verbs',
+    conjugation:{ja:'jestem',ty:'jesteś',onOnaOno:'jest',my:'jesteśmy',wy:'jesteście',oniOne:'są'},
+    enConjugation:{ja:'I am',ty:'you are',onOnaOno:'he / she / it is',my:'we are',wy:'you are',oniOne:'they are'}},
+  {id:'b66',en:'To have',pl:'Mieć',category:'Verbs',
+    conjugation:{ja:'mam',ty:'masz',onOnaOno:'ma',my:'mamy',wy:'macie',oniOne:'mają'},
+    enConjugation:{ja:'I have',ty:'you have',onOnaOno:'he / she / it has',my:'we have',wy:'you have',oniOne:'they have'}},
+  {id:'b67',en:'To go',pl:'Iść',category:'Verbs',
+    conjugation:{ja:'idę',ty:'idziesz',onOnaOno:'idzie',my:'idziemy',wy:'idziecie',oniOne:'idą'},
+    enConjugation:{ja:'I go',ty:'you go',onOnaOno:'he / she / it goes',my:'we go',wy:'you go',oniOne:'they go'}},
+  {id:'b68',en:'To eat',pl:'Jeść',category:'Verbs',
+    conjugation:{ja:'jem',ty:'jesz',onOnaOno:'je',my:'jemy',wy:'jecie',oniOne:'jedzą'},
+    enConjugation:{ja:'I eat',ty:'you eat',onOnaOno:'he / she / it eats',my:'we eat',wy:'you eat',oniOne:'they eat'}},
+  {id:'b69',en:'To drink',pl:'Pić',category:'Verbs',
+    conjugation:{ja:'piję',ty:'pijesz',onOnaOno:'pije',my:'pijemy',wy:'pijecie',oniOne:'piją'},
+    enConjugation:{ja:'I drink',ty:'you drink',onOnaOno:'he / she / it drinks',my:'we drink',wy:'you drink',oniOne:'they drink'}},
+  {id:'b70',en:'To sleep',pl:'Spać',category:'Verbs',
+    conjugation:{ja:'śpię',ty:'śpisz',onOnaOno:'śpi',my:'śpimy',wy:'śpicie',oniOne:'śpią'},
+    enConjugation:{ja:'I sleep',ty:'you sleep',onOnaOno:'he / she / it sleeps',my:'we sleep',wy:'you sleep',oniOne:'they sleep'}},
+  {id:'b71',en:'To speak',pl:'Mówić',category:'Verbs',
+    conjugation:{ja:'mówię',ty:'mówisz',onOnaOno:'mówi',my:'mówimy',wy:'mówicie',oniOne:'mówią'},
+    enConjugation:{ja:'I speak',ty:'you speak',onOnaOno:'he / she / it speaks',my:'we speak',wy:'you speak',oniOne:'they speak'}},
+  {id:'b72',en:'To want',pl:'Chcieć',category:'Verbs',
+    conjugation:{ja:'chcę',ty:'chcesz',onOnaOno:'chce',my:'chcemy',wy:'chcecie',oniOne:'chcą'},
+    enConjugation:{ja:'I want',ty:'you want',onOnaOno:'he / she / it wants',my:'we want',wy:'you want',oniOne:'they want'}},
+  {id:'b73',en:'To like / love',pl:'Lubić',category:'Verbs',
+    conjugation:{ja:'lubię',ty:'lubisz',onOnaOno:'lubi',my:'lubimy',wy:'lubicie',oniOne:'lubią'},
+    enConjugation:{ja:'I like',ty:'you like',onOnaOno:'he / she / it likes',my:'we like',wy:'you like',oniOne:'they like'}},
+  {id:'b74',en:'To see',pl:'Widzieć',category:'Verbs',
+    conjugation:{ja:'widzę',ty:'widzisz',onOnaOno:'widzi',my:'widzimy',wy:'widzicie',oniOne:'widzą'},
+    enConjugation:{ja:'I see',ty:'you see',onOnaOno:'he / she / it sees',my:'we see',wy:'you see',oniOne:'they see'}},
+  {id:'b75',en:'To work',pl:'Pracować',category:'Verbs',
+    conjugation:{ja:'pracuję',ty:'pracujesz',onOnaOno:'pracuje',my:'pracujemy',wy:'pracujecie',oniOne:'pracują'},
+    enConjugation:{ja:'I work',ty:'you work',onOnaOno:'he / she / it works',my:'we work',wy:'you work',oniOne:'they work'}},
+  {id:'b76',en:'To read',pl:'Czytać',category:'Verbs',
+    conjugation:{ja:'czytam',ty:'czytasz',onOnaOno:'czyta',my:'czytamy',wy:'czytacie',oniOne:'czytają'},
+    enConjugation:{ja:'I read',ty:'you read',onOnaOno:'he / she / it reads',my:'we read',wy:'you read',oniOne:'they read'}},
+  {id:'b77',en:'To write',pl:'Pisać',category:'Verbs',
+    conjugation:{ja:'piszę',ty:'piszesz',onOnaOno:'pisze',my:'piszemy',wy:'piszecie',oniOne:'piszą'},
+    enConjugation:{ja:'I write',ty:'you write',onOnaOno:'he / she / it writes',my:'we write',wy:'you write',oniOne:'they write'}},
+  {id:'b78',en:'Good',pl:'Dobry',category:'Adjectives'},
+  {id:'b79',en:'Bad',pl:'Zły',category:'Adjectives'},
+  {id:'b80',en:'Big',pl:'Duży',category:'Adjectives'},
+  {id:'b81',en:'Small',pl:'Mały',category:'Adjectives'},
+  {id:'b82',en:'Beautiful',pl:'Piękny',category:'Adjectives'},
+  {id:'b83',en:'New',pl:'Nowy',category:'Adjectives'},
+  {id:'b84',en:'Old',pl:'Stary',category:'Adjectives'},
+  {id:'b85',en:'Happy',pl:'Szczęśliwy',category:'Adjectives'},
+  {id:'b86',en:'Sad',pl:'Smutny',category:'Adjectives'},
+  {id:'b87',en:'Fast',pl:'Szybki',category:'Adjectives'},
+  {id:'b88',en:'Slow',pl:'Wolny',category:'Adjectives'},
+  {id:'b89',en:'Hot',pl:'Gorący',category:'Adjectives'},
+  {id:'b90',en:'Cold',pl:'Zimny',category:'Adjectives'},
+  {id:'b91',en:'Train station',pl:'Dworzec',category:'Travel'},
+  {id:'b92',en:'Airport',pl:'Lotnisko',category:'Travel'},
+  {id:'b93',en:'Hotel',pl:'Hotel',category:'Travel'},
+  {id:'b94',en:'Left',pl:'Lewo',category:'Travel'},
+  {id:'b95',en:'Right',pl:'Prawo',category:'Travel'},
+  {id:'b96',en:'Straight ahead',pl:'Prosto',category:'Travel'},
+  {id:'b97',en:'Where is…?',pl:'Gdzie jest…?',category:'Travel'},
+  {id:'b98',en:'How much does it cost?',pl:'Ile to kosztuje?',category:'Travel'},
+  {id:'b99',en:'Ticket',pl:'Bilet',category:'Travel'},
+  {id:'b100',en:'Street',pl:'Ulica',category:'Travel'},
+  {id:'b101',en:'City',pl:'Miasto',category:'Travel'},
+  {id:'b102',en:'Map',pl:'Mapa',category:'Travel'},
+  {id:'b103',en:"I don't understand",pl:'Nie rozumiem',category:'Phrases'},
+  {id:'b104',en:'Do you speak English?',pl:'Czy mówisz po angielsku?',category:'Phrases'},
+  {id:'b105',en:'Help!',pl:'Pomocy!',category:'Phrases'},
+  {id:'b106',en:'I love you',pl:'Kocham cię',category:'Phrases'},
+  {id:'b107',en:'Cheers!',pl:'Na zdrowie!',category:'Phrases'},
+  {id:'b108',en:'Congratulations',pl:'Gratulacje',category:'Phrases'},
+  {id:'b109',en:'in',pl:'w',category:'Connectors'},
+  {id:'b110',en:'on',pl:'na',category:'Connectors'},
+  {id:'b111',en:'with',pl:'z',category:'Connectors'},
+  {id:'b112',en:'but',pl:'ale',category:'Connectors'},
+  {id:'b113',en:'because',pl:'ponieważ',category:'Connectors'},
+  {id:'b114',en:'because (casual)',pl:'bo',category:'Connectors'},
+  {id:'b115',en:'and',pl:'i',category:'Connectors'},
+  {id:'b116',en:'or',pl:'albo',category:'Connectors'},
+  {id:'b117',en:'if',pl:'jeśli',category:'Connectors'},
+  {id:'b118',en:'less',pl:'mniej',category:'Connectors'},
+  {id:'b119',en:'more',pl:'więcej',category:'Connectors'},
+  {id:'b120',en:'less than',pl:'mniej niż',category:'Connectors'},
+  {id:'b121',en:'more than',pl:'więcej niż',category:'Connectors'},
+];
+
+/* ================= READING DRILLS (invented practice words) ================= */
+const DRILL_WORDS = [
+  {id:'d1',focus:'ł',note:'Sounds like the English "w" in "water" — not an English "l" at all.',pl:'łolatuła',category:'Reading Drills',isDrill:true},
+  {id:'d2',focus:'w',note:'Always sounds like an English "v" — never like an English "w".',pl:'wowuwa',category:'Reading Drills',isDrill:true},
+  {id:'d3',focus:'rz',note:'Sounds like the "s" in "measure" — identical to ż.',pl:'rzarzurza',category:'Reading Drills',isDrill:true},
+  {id:'d4',focus:'ż',note:'The same "zh" sound as rz — like the "s" in "measure".',pl:'żeżoża',category:'Reading Drills',isDrill:true},
+  {id:'d5',focus:'sz',note:'Sounds like the English "sh" in "shoe".',pl:'szoszusza',category:'Reading Drills',isDrill:true},
+  {id:'d6',focus:'ś / si',note:'A softer, hissier "sh" — tongue closer to the teeth than sz.',pl:'świsioś',category:'Reading Drills',isDrill:true},
+  {id:'d7',focus:'cz',note:'Sounds like the English "ch" in "church" — harder than ć.',pl:'czuczocza',category:'Reading Drills',isDrill:true},
+  {id:'d8',focus:'ć / ci',note:'A softer "ch" — like "ch" in "cheese" said gently.',pl:'ćwiciać',category:'Reading Drills',isDrill:true},
+  {id:'d9',focus:'dz',note:'Sounds like the "ds" in "kids", said as one sound.',pl:'dzadzudze',category:'Reading Drills',isDrill:true},
+  {id:'d10',focus:'dź / dzi',note:'A soft "j" — close to "j" in "jeep" but gentler.',pl:'dziudzia',category:'Reading Drills',isDrill:true},
+  {id:'d11',focus:'dż',note:'Sounds like the hard English "j" in "jungle".',pl:'dżedżoli',category:'Reading Drills',isDrill:true},
+  {id:'d12',focus:'ą',note:'A nasal sound — like saying "on" through your nose (French "bon").',pl:'bąkążą',category:'Reading Drills',isDrill:true},
+  {id:'d13',focus:'ę',note:'A nasal "en" through the nose — often relaxes to a plain "e" at the end of a word.',pl:'gębędzę',category:'Reading Drills',isDrill:true},
+  {id:'d14',focus:'ó',note:'Always sounds like "oo" in "moon" — identical to u.',pl:'górólo',category:'Reading Drills',isDrill:true},
+  {id:'d15',focus:'y',note:'A short, flat sound like the "i" in "sit" — never like "ee".',pl:'trybydry',category:'Reading Drills',isDrill:true},
+  {id:'d16',focus:'ch / h',note:'Both spellings make the same sound, like the English "h" in "house".',pl:'chochucha',category:'Reading Drills',isDrill:true},
+  {id:'d17',focus:'ń / ni',note:'A soft "ny" sound, like the "ni" in "onion".',pl:'wańcunia',category:'Reading Drills',isDrill:true},
+];
+
+const DIACRITICS = ['ą','ć','ę','ł','ń','ó','ś','ź','ż'];
+function stampFor(id){
+  let h=0; for(let i=0;i<id.length;i++) h = (h*31 + id.charCodeAt(i))>>>0;
+  return DIACRITICS[h % DIACRITICS.length];
+}
+
+/* ================= CONJUGATION HELPERS ================= */
+const PRONOUN_INFO = {
+  ja:{label:'ja (I)'}, ty:{label:'ty (you)'}, onOnaOno:{label:'on / ona / ono (he, she, it)'},
+  my:{label:'my (we)'}, wy:{label:'wy (you all)'}, oniOne:{label:'oni / one (they)'}
+};
+const PRONOUN_KEYS = Object.keys(PRONOUN_INFO);
+
+/* ================= PHONETIC TRANSLITERATION ================= */
+function polishWordPhonetic(raw){
+  let w = raw.toLowerCase();
+  function softPair(cons, soft){
+    w = w.replace(new RegExp(cons+'([aąeęou])','g'), (m,v)=> soft + vow(v));
+    w = w.replace(new RegExp(cons,'g'), soft+'IH');
+  }
+  softPair('dzi','J'); softPair('ci','CH'); softPair('si','SH'); softPair('zi','ZH'); softPair('ni','NY');
+  w = w.replace(/dź/g,'JI'); w = w.replace(/dż/g,'J'); w = w.replace(/dz/g,'DZ');
+  w = w.replace(/rz/g,'ZH'); w = w.replace(/sz/g,'SH'); w = w.replace(/cz/g,'CH'); w = w.replace(/ch/g,'H');
+  w = w.replace(/ć/g,'CH'); w = w.replace(/ś/g,'SH'); w = w.replace(/ź/g,'ZH'); w = w.replace(/ż/g,'ZH');
+  w = w.replace(/ł/g,'W'); w = w.replace(/ó/g,'OO'); w = w.replace(/ą/g,'ON'); w = w.replace(/ę/g,'EN');
+  w = w.replace(/w/g,'V'); w = w.replace(/j/g,'Y'); w = w.replace(/y/g,'I'); w = w.replace(/c/g,'TS'); w = w.replace(/u/g,'OO');
+  w = w.replace(/[a-ząęćłńóśźż]/g, ch => ch.toUpperCase());
+  w = w.replace(/EN$/, 'E');
+  return w;
+  function vow(v){
+    switch(v){ case 'a': return 'A'; case 'ą': return 'ON'; case 'e': return 'E'; case 'ę': return 'EN';
+      case 'o': return 'O'; case 'u': return 'OO'; default: return ''; }
+  }
+}
+function stressify(tok){
+  const nuclei = []; let i=0;
+  const two_set = ['OO','ON','OM','EN','EM','IH'];
+  while(i < tok.length){
+    const two = tok.slice(i,i+2);
+    if(two_set.includes(two)){ nuclei.push([i,i+2]); i+=2; continue; }
+    const one = tok[i];
+    if(['A','E','I','O','U'].includes(one)){ nuclei.push([i,i+1]); i+=1; continue; }
+    i+=1;
+  }
+  if(nuclei.length >= 2){
+    const [s,e] = nuclei[nuclei.length-2];
+    tok = tok.slice(0,s).toLowerCase() + tok.slice(s,e).toUpperCase() + tok.slice(e).toLowerCase();
+  } else { tok = tok.toLowerCase(); }
+  return tok;
+}
+function ph(phrase){
+  if(!phrase) return '';
+  return phrase.split(/(\s+)/).map(part=>{
+    if(/^\s+$/.test(part)) return part;
+    const m = part.match(/^([\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ]*)(.*)$/);
+    const core = m[1], rest = m[2];
+    if(!core) return part;
+    return stressify(polishWordPhonetic(core)) + rest;
+  }).join('');
+}
+
+/* ================= STATE ================= */
+let customWords = [];
+let progress = {};
+let excluded = {};
+let statsData = {streak:0, lastDate:null};
+
+let currentMode = 'en-pl';
+let activeCategories = new Set();
+let activeVerbForms = new Set(['inf','ja','ty','onOnaOno','my','wy','oniOne']);
+let session = null;
+
+const VERB_FORM_LABELS = {
+  inf:'Infinitive', ja:'I', ty:'You', onOnaOno:'He/She/It', my:'We', wy:'You (all)', oniOne:'They'
+};
+const VERB_FORM_KEYS = ['inf','ja','ty','onOnaOno','my','wy','oniOne'];
+
+const STORAGE = { words:'custom-words', progress:'progress', excluded:'excluded-builtin', stats:'stats' };
+
+const MODE_EXPLAIN = {
+  'en-pl':'English word first, then flip to see the Polish translation and hear it.',
+  'pl-en':'Polish word first — read and try to recall the meaning, then flip to check.',
+  'pron':'Hear it, say it back. Mixes vocabulary with letter-sound reading drills.',
+  'conj':'Practice conjugating verbs across ja / ty / on-ona-ono / my / wy / oni-one.'
+};
+
+/* ================= STORAGE HELPERS =================
+   Uses localStorage (not window.storage) because this file is meant to be
+   saved to the home screen and run as a standalone page, outside Claude's
+   artifact environment where window.storage would be available. */
+async function loadKey(key, fallback){
+  try{
+    const raw = localStorage.getItem('slowka:'+key);
+    return raw !== null ? JSON.parse(raw) : fallback;
+  }catch(e){ return fallback; }
+}
+async function saveKey(key, value){
+  try{
+    localStorage.setItem('slowka:'+key, JSON.stringify(value));
+  }catch(e){ console.error('Storage save failed', key, e); showToast("Couldn't save — try again"); }
+}
+
+/* ================= INIT ================= */
+async function init(){
+  const [w,p,ex,st] = await Promise.all([
+    loadKey(STORAGE.words, []), loadKey(STORAGE.progress, {}),
+    loadKey(STORAGE.excluded, {}), loadKey(STORAGE.stats, {streak:0,lastDate:null})
+  ]);
+  customWords = w; progress = p; excluded = ex; statsData = st;
+
+  if('speechSynthesis' in window){ window.speechSynthesis.getVoices(); }
+
+  buildCategoryChips();
+  buildVerbFormChips();
+  buildWordFilterChips();
+  renderWordList();
+  renderProgress();
+  updateDueCount();
+  document.getElementById('streakNum').textContent = statsData.streak || 0;
+
+  bindNav(); bindPracticeControls(); bindAddForm(); bindWordsView(); bindProgressView();
+}
+
+/* ================= WORD HELPERS ================= */
+function allWords(){ return BUILTIN_WORDS.concat(DRILL_WORDS).concat(customWords); }
+function practiceableWords(){ return allWords().filter(w => !excluded[w.id]); }
+function allCategories(){ return Array.from(new Set(allWords().map(w=>w.category || 'Other'))); }
+function getProgress(id){ return progress[id] || {box:0, next:0, correct:0, incorrect:0}; }
+
+/* ================= NAV ================= */
+function bindNav(){
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if(btn.dataset.view==='progress') renderProgress();
+      if(btn.dataset.view==='words'){ buildWordFilterChips(); renderWordList(); }
+      if(btn.dataset.view==='add') buildDatalist();
+    });
+  });
+}
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+
+/* ================= SPEECH ================= */
+function speak(text, slow){
+  if(!('speechSynthesis' in window)){ showToast('Speech not supported on this device'); return; }
+  const voices = window.speechSynthesis.getVoices();
+  const plVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pl'));
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'pl-PL';
+  if(plVoice) utter.voice = plVoice;
+  utter.rate = slow ? 0.62 : 0.92;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+/* ================= CATEGORY CHIPS (Practice) ================= */
+function buildCategoryChips(){
+  const wrap = document.getElementById('categoryChips');
+  wrap.innerHTML = '';
+  allCategories().forEach(cat=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip active'; chip.textContent = cat; chip.dataset.cat = cat;
+    chip.addEventListener('click', ()=>{ chip.classList.toggle('active'); updateActiveCategories(); updateDueCount(); });
+    wrap.appendChild(chip);
+  });
+  updateActiveCategories();
+}
+function updateActiveCategories(){
+  const active = new Set();
+  document.querySelectorAll('#categoryChips .chip').forEach(c=>{ if(c.classList.contains('active')) active.add(c.dataset.cat); });
+  activeCategories = active;
+}
+
+function buildVerbFormChips(){
+  const wrap = document.getElementById('verbFormChips');
+  wrap.innerHTML = '';
+  VERB_FORM_KEYS.forEach(key=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (activeVerbForms.has(key) ? ' active' : '');
+    chip.textContent = VERB_FORM_LABELS[key];
+    chip.dataset.form = key;
+    chip.addEventListener('click', ()=>{
+      chip.classList.toggle('active');
+      if(activeVerbForms.has(key)) activeVerbForms.delete(key); else activeVerbForms.add(key);
+      updateDueCount();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+/* Best-effort English present-tense conjugation for custom verbs that don't have enConjugation set */
+function autoConjugateEnglish(enText, key){
+  const base = (enText||'').replace(/^to\s+/i,'').trim() || enText;
+  const lower = base.toLowerCase();
+  if(lower === 'be'){
+    return {ja:'I am',ty:'you are',onOnaOno:'he / she / it is',my:'we are',wy:'you are',oniOne:'they are'}[key];
+  }
+  if(lower === 'have'){
+    return {ja:'I have',ty:'you have',onOnaOno:'he / she / it has',my:'we have',wy:'you have',oniOne:'they have'}[key];
+  }
+  function thirdPerson(b){
+    if(/(ch|sh)$/.test(b) || /[osxz]$/.test(b)) return b+'es';
+    if(/[^aeiou]y$/.test(b)) return b.slice(0,-1)+'ies';
+    return b+'s';
+  }
+  const prefixMap = {ja:'I ', ty:'you ', onOnaOno:'he / she / it ', my:'we ', wy:'you ', oniOne:'they '};
+  const form = key==='onOnaOno' ? thirdPerson(base) : base;
+  return prefixMap[key] + form;
+}
+
+/* Turn a verb's base entry into one card per selected form (infinitive + chosen pronouns) */
+function expandWordForPractice(word, forms){
+  if(!word.conjugation) return [word];
+  const list = [];
+  if(forms.has('inf')) list.push(word);
+  PRONOUN_KEYS.forEach(k=>{
+    if(forms.has(k)){
+      const enForm = (word.enConjugation && word.enConjugation[k]) || autoConjugateEnglish(word.en, k);
+      list.push({
+        id: word.id+'-'+k, en: enForm, pl: word.conjugation[k], category: word.category,
+        isConjForm:true, baseId: word.id, formKey:k
+      });
+    }
+  });
+  if(list.length === 0) list.push(word);
+  return list;
+}
+
+function bindPracticeControls(){
+  document.querySelectorAll('#modeSegment button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#modeSegment button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      document.getElementById('modeExplain').textContent = MODE_EXPLAIN[currentMode];
+      updateDueCount();
+    });
+  });
+  document.getElementById('startSessionBtn').addEventListener('click', startSession);
+}
+
+function filteredPracticePool(mode){
+  const cats = activeCategories.size ? activeCategories : new Set(allCategories());
+  let pool = practiceableWords().filter(w => cats.has(w.category || 'Other'));
+
+  if(mode === 'conj'){
+    return pool.filter(w => !!w.conjugation);
+  }
+
+  if(mode === 'en-pl' || mode === 'pl-en'){ pool = pool.filter(w => !w.isDrill); }
+
+  const forms = activeVerbForms.size ? activeVerbForms : new Set(['inf']);
+  let expanded = [];
+  pool.forEach(w=>{
+    if(w.conjugation){ expanded = expanded.concat(expandWordForPractice(w, forms)); }
+    else { expanded.push(w); }
+  });
+  return expanded;
+}
+function updateDueCount(){
+  const pool = filteredPracticePool(currentMode);
+  document.getElementById('dueNum').textContent = pool.length;
+  document.getElementById('startSessionBtn').disabled = pool.length === 0;
+}
+
+/* ================= SESSION ================= */
+function startSession(){
+  let pool = filteredPracticePool(currentMode);
+  if(pool.length === 0){ showToast('No words in this selection yet'); return; }
+
+  const now = Date.now();
+  pool = pool.slice().sort((a,b)=>{
+    const pa = getProgress(a.id), pb = getProgress(b.id);
+    const da = (pa.next||0) <= now ? 0 : 1;
+    const db = (pb.next||0) <= now ? 0 : 1;
+    if(da !== db) return da-db;
+    return Math.random()-0.5;
+  });
+  pool = pool.slice(0, Math.min(pool.length, 20));
+
+  let cards;
+  if(currentMode === 'conj'){
+    let pronounPool = PRONOUN_KEYS.filter(k => activeVerbForms.has(k));
+    if(pronounPool.length === 0) pronounPool = PRONOUN_KEYS;
+    cards = pool.map(w => ({ isConj:true, word:w, pronoun: pronounPool[Math.floor(Math.random()*pronounPool.length)] }));
+  } else {
+    cards = pool;
+  }
+
+  session = { cards, index:0, correct:0, partial:0, incorrect:0, mode: currentMode };
+  document.getElementById('practiceStart').style.display = 'none';
+  const s = document.getElementById('practiceSession');
+  s.style.display = 'block';
+  renderCard();
+}
+
+function endSession(){
+  const s = document.getElementById('practiceSession');
+  const total = session.correct + session.partial + session.incorrect;
+  s.innerHTML = `
+    <div class="session-end">
+      <div class="glyph">${session.correct >= session.incorrect ? '✓' : '↻'}</div>
+      <h2 class="section-title" style="text-align:center;">Session complete</h2>
+      <div class="score">${session.correct} got it &nbsp;·&nbsp; ${session.partial} almost &nbsp;·&nbsp; ${session.incorrect} to study more<br>out of ${total} cards</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="doneBtn">Done</button>
+        <button class="btn btn-primary" id="againBtn">Practice again</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('doneBtn').addEventListener('click', closeSession);
+  document.getElementById('againBtn').addEventListener('click', ()=>{ closeSession(); startSession(); });
+  bumpStreak();
+}
+
+function closeSession(){
+  session = null;
+  document.getElementById('practiceSession').style.display='none';
+  document.getElementById('practiceStart').style.display='block';
+  buildCategoryChips();
+  updateDueCount();
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function renderCard(){
+  if(!session) return;
+  if(session.index >= session.cards.length){ endSession(); return; }
+  const raw = session.cards[session.index];
+  const mode = session.mode;
+  const s = document.getElementById('practiceSession');
+  const pct = Math.round((session.index/session.cards.length)*100);
+
+  let word, pronounKey = null;
+  if(mode === 'conj'){ word = raw.word; pronounKey = raw.pronoun; } else { word = raw; }
+
+  let frontHtml, backHtml, frontHasSpeak = false, speakTextFront = '', speakTextBack = '';
+
+  if(mode === 'conj'){
+    const conjForm = word.conjugation[pronounKey];
+    const tableRows = PRONOUN_KEYS.map(k=>{
+      const cls = k===pronounKey ? 'conj-mini-row target' : 'conj-mini-row';
+      return `<div class="${cls}"><span>${PRONOUN_INFO[k].label}</span><span class="mono">${escapeHtml(word.conjugation[k])}</span></div>`;
+    }).join('');
+    frontHtml = `
+      <div class="stamp">${stampFor(word.id)}</div>
+      <div class="card-eyebrow">Conjugate</div>
+      <div class="card-word">${escapeHtml(word.en)}</div>
+      <div class="card-sub">infinitive: ${escapeHtml(word.pl)}</div>
+      <div class="card-target">for: ${escapeHtml(PRONOUN_INFO[pronounKey].label)}</div>
+      <div class="tap-hint">Tap card to flip</div>
+    `;
+    backHtml = `
+      <div class="stamp">${stampFor(word.id)}</div>
+      <div class="card-eyebrow">${escapeHtml(PRONOUN_INFO[pronounKey].label)}</div>
+      <div class="card-word">${escapeHtml(conjForm)}</div>
+      <div class="card-phon">/ ${escapeHtml(ph(conjForm))} /</div>
+      <div class="speak-row">
+        <button class="speak-btn" id="speakBackBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <button class="speak-slow" id="speakSlowBackBtn">Play slowly</button>
+      <div class="conj-mini">${tableRows}</div>
+    `;
+    speakTextBack = conjForm;
+  } else if(word.isDrill){
+    frontHtml = `
+      <div class="stamp">${stampFor(word.id)}</div>
+      <div class="card-eyebrow">Letter sound</div>
+      <div class="card-word">${escapeHtml(word.focus)}</div>
+      <div class="card-sub">${escapeHtml(word.note)}</div>
+      <div class="tap-hint">Tap card to see a practice word</div>
+    `;
+    backHtml = `
+      <div class="stamp">${stampFor(word.id)}</div>
+      <div class="card-eyebrow">Read it aloud</div>
+      <div class="card-word">${escapeHtml(word.pl)}</div>
+      <div class="card-phon">/ ${escapeHtml(ph(word.pl))} /</div>
+      <div class="speak-row">
+        <button class="speak-btn" id="speakBackBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <button class="speak-slow" id="speakSlowBackBtn">Play slowly</button>
+      <div class="invented-tag">Invented practice word — not real Polish, just for reading practice.</div>
+    `;
+    speakTextBack = word.pl;
+  } else {
+    const frontIsPolish = (mode === 'pl-en' || mode === 'pron');
+    const frontText = frontIsPolish ? word.pl : word.en;
+    const backText = frontIsPolish ? word.en : word.pl;
+    const frontLabel = frontIsPolish ? (mode==='pron' ? 'Say it aloud' : 'Polish') : 'English';
+    const backLabel = frontIsPolish ? 'English meaning' : 'Polish';
+
+    frontHtml = `
+      <div class="stamp">${stampFor(word.id)}</div>
+      <div class="card-eyebrow">${frontLabel}</div>
+      <div class="card-word">${escapeHtml(frontText)}</div>
+      ${frontIsPolish ? `<div class="card-phon">/ ${escapeHtml(ph(frontText))} /</div>
+        <div class="speak-row"><button class="speak-btn" id="speakFrontBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+        <button class="speak-slow" id="speakSlowFrontBtn">Play slowly</button>` : ''}
+      <div class="tap-hint">Tap card to flip</div>
+    `;
+    backHtml = `
+      <div class="stamp">${stampFor(word.id)}</div>
+      <div class="card-eyebrow">${backLabel}</div>
+      <div class="card-word">${escapeHtml(backText)}</div>
+      ${(!frontIsPolish) ? `<div class="card-phon">/ ${escapeHtml(ph(backText))} /</div>
+        <div class="speak-row"><button class="speak-btn" id="speakBackBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+        <button class="speak-slow" id="speakSlowBackBtn">Play slowly</button>` : ''}
+      <div class="card-sub">${escapeHtml(word.category||'')}</div>
+    `;
+    if(frontIsPolish){ speakTextFront = frontText; } else { speakTextBack = backText; }
+  }
+
+  s.innerHTML = `
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card-stage">
+      <div class="card-inner" id="cardInner">
+        <div class="card-face front">${frontHtml}</div>
+        <div class="card-face back">${backHtml}</div>
+      </div>
+    </div>
+    <div class="judge-row" id="judgeRow" style="visibility:hidden;">
+      <button class="btn btn-rose" id="againJudgeBtn">Study more</button>
+      <button class="btn btn-amber" id="almostJudgeBtn">Almost</button>
+      <button class="btn btn-sage" id="gotItBtn">Got it</button>
+    </div>
+  `;
+
+  const inner = document.getElementById('cardInner');
+  let flipped = false;
+  inner.addEventListener('click', (e)=>{
+    if(e.target.closest('.speak-btn') || e.target.closest('.speak-slow')) return;
+    flipped = !flipped;
+    inner.classList.toggle('flipped', flipped);
+    if(flipped) document.getElementById('judgeRow').style.visibility='visible';
+  });
+
+  const sf = document.getElementById('speakFrontBtn'); if(sf) sf.addEventListener('click', ()=>speak(speakTextFront,false));
+  const ssf = document.getElementById('speakSlowFrontBtn'); if(ssf) ssf.addEventListener('click', ()=>speak(speakTextFront,true));
+  const sb = document.getElementById('speakBackBtn'); if(sb) sb.addEventListener('click', ()=>speak(speakTextBack,false));
+  const ssb = document.getElementById('speakSlowBackBtn'); if(ssb) ssb.addEventListener('click', ()=>speak(speakTextBack,true));
+
+  if(speakTextFront){ setTimeout(()=>speak(speakTextFront,false), 300); }
+
+  document.getElementById('againJudgeBtn').addEventListener('click', ()=>judge(word,'again'));
+  document.getElementById('almostJudgeBtn').addEventListener('click', ()=>judge(word,'almost'));
+  document.getElementById('gotItBtn').addEventListener('click', ()=>judge(word,'good'));
+}
+
+function judge(word, verdict){
+  const p = getProgress(word.id);
+  const intervals = {1:0, 2:1, 3:3, 4:7, 5:14};
+  if(verdict === 'good'){
+    p.box = Math.min((p.box||0)+1, 5);
+    p.correct = (p.correct||0)+1;
+    session.correct++;
+    p.next = Date.now() + (intervals[p.box] ?? 0)*24*60*60*1000;
+  } else if(verdict === 'almost'){
+    p.box = Math.max(p.box||0, 1);
+    session.partial++;
+    p.next = Date.now() + 1*24*60*60*1000;
+  } else {
+    p.box = 1;
+    p.incorrect = (p.incorrect||0)+1;
+    session.incorrect++;
+    p.next = Date.now();
+  }
+  progress[word.id] = p;
+  saveKey(STORAGE.progress, progress);
+  session.index++;
+  renderCard();
+}
+
+function bumpStreak(){
+  const today = new Date().toDateString();
+  if(statsData.lastDate === today) return;
+  const yesterday = new Date(Date.now()-86400000).toDateString();
+  statsData.streak = (statsData.lastDate === yesterday) ? (statsData.streak||0)+1 : 1;
+  statsData.lastDate = today;
+  saveKey(STORAGE.stats, statsData);
+  document.getElementById('streakNum').textContent = statsData.streak;
+}
+
+/* ================= ADD WORD ================= */
+function buildDatalist(){
+  document.getElementById('catList').innerHTML = allCategories().map(c=>`<option value="${escapeHtml(c)}">`).join('');
+}
+function bindAddForm(){
+  buildDatalist();
+  document.getElementById('addIsVerb').addEventListener('change', (e)=>{
+    document.getElementById('conjInputs').classList.toggle('show', e.target.checked);
+  });
+  document.getElementById('saveWordBtn').addEventListener('click', async ()=>{
+    const en = document.getElementById('addEn').value.trim();
+    const pl = document.getElementById('addPl').value.trim();
+    let cat = document.getElementById('addCat').value.trim();
+    if(!en || !pl){ showToast('Add both an English and Polish word'); return; }
+    if(!cat) cat = 'My Words';
+
+    const word = {id:'c'+Date.now()+Math.floor(Math.random()*1000), en, pl, category:cat, createdAt:Date.now()};
+
+    if(document.getElementById('addIsVerb').checked){
+      const ja = document.getElementById('conjJa').value.trim();
+      const ty = document.getElementById('conjTy').value.trim();
+      const onOnaOno = document.getElementById('conjOn').value.trim();
+      const my = document.getElementById('conjMy').value.trim();
+      const wy = document.getElementById('conjWy').value.trim();
+      const oniOne = document.getElementById('conjOni').value.trim();
+      if(ja||ty||onOnaOno||my||wy||oniOne){
+        word.conjugation = {
+          ja: ja||'—', ty: ty||'—', onOnaOno: onOnaOno||'—', my: my||'—', wy: wy||'—', oniOne: oniOne||'—'
+        };
+      }
+    }
+
+    customWords.push(word);
+    await saveKey(STORAGE.words, customWords);
+    ['addEn','addPl','addCat','conjJa','conjTy','conjOn','conjMy','conjWy','conjOni'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('addIsVerb').checked = false;
+    document.getElementById('conjInputs').classList.remove('show');
+    showToast(`Added "${en}"`);
+    buildCategoryChips(); buildWordFilterChips(); buildDatalist(); renderWordList(); updateDueCount(); renderProgress();
+  });
+}
+
+/* ================= WORDS VIEW ================= */
+let wordSearchTerm = '';
+let wordFilterCats = new Set();
+
+function buildWordFilterChips(){
+  const wrap = document.getElementById('wordFilterChips');
+  wrap.innerHTML='';
+  allCategories().forEach(cat=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (wordFilterCats.has(cat) ? ' active' : '');
+    chip.textContent = cat;
+    chip.addEventListener('click', ()=>{
+      if(wordFilterCats.has(cat)) wordFilterCats.delete(cat); else wordFilterCats.add(cat);
+      chip.classList.toggle('active');
+      renderWordList();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function bindWordsView(){
+  document.getElementById('wordSearch').addEventListener('input', (e)=>{
+    wordSearchTerm = e.target.value.toLowerCase();
+    renderWordList();
+  });
+}
+
+function renderWordList(){
+  const list = document.getElementById('wordList');
+  let words = allWords();
+  if(wordFilterCats.size){ words = words.filter(w => wordFilterCats.has(w.category)); }
+  if(wordSearchTerm){
+    words = words.filter(w => (w.en||'').toLowerCase().includes(wordSearchTerm) || w.pl.toLowerCase().includes(wordSearchTerm) || (w.focus||'').toLowerCase().includes(wordSearchTerm));
+  }
+  if(words.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="glyph">ł</div><p>No words match. Try a different search, or add one from the Add tab.</p></div>`;
+    return;
+  }
+  const groups = {};
+  words.forEach(w=>{ const c = w.category || 'Other'; (groups[c] = groups[c]||[]).push(w); });
+
+  let html='';
+  Object.keys(groups).sort().forEach(cat=>{
+    html += `<div class="category-group"><div class="category-heading">${escapeHtml(cat)}</div>`;
+    groups[cat].forEach(w=>{
+      const isCustom = w.id.startsWith('c');
+      const isExcluded = !!excluded[w.id];
+      const displayEn = w.isDrill ? `Letter: ${escapeHtml(w.focus)}` : escapeHtml(w.en);
+      html += `<div class="word-row" data-id="${w.id}">
+        <div class="txt">
+          <div class="en">${displayEn}</div>
+          <div class="pl">${escapeHtml(w.pl)}</div>
+          <div class="phon">/ ${escapeHtml(ph(w.pl))} /</div>
+        </div>
+        <button class="icon-btn speak-row-btn" data-pl="${escapeHtml(w.pl)}" aria-label="Play">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        ${w.conjugation ? `<button class="icon-btn conj-toggle-btn" data-id="${w.id}" aria-label="Show conjugations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>` : ''}
+        <button class="icon-btn toggle-include-btn ${isExcluded ? '' : 'on'}" data-id="${w.id}" aria-label="Include in practice" title="${isExcluded ? 'Excluded from practice' : 'Included in practice'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </button>
+        ${isCustom ? `<button class="icon-btn delete-word-btn" data-id="${w.id}" aria-label="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6"/></svg>
+        </button>` : ''}
+      </div>
+      ${w.conjugation ? `<div class="conj-panel" id="conjpanel-${w.id}" style="display:none;">
+          ${PRONOUN_KEYS.map(k=>`<div class="conj-row">
+              <span class="p">${PRONOUN_INFO[k].label}</span>
+              <span class="f">${escapeHtml(w.conjugation[k])}</span>
+              <button class="icon-btn-sm conj-speak-btn" data-pl="${escapeHtml(w.conjugation[k])}" aria-label="Play">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>`).join('')}
+        </div>` : ''}
+      `;
+    });
+    html += `</div>`;
+  });
+  list.innerHTML = html;
+
+  list.querySelectorAll('.speak-row-btn').forEach(b=> b.addEventListener('click', ()=>speak(b.dataset.pl,false)));
+  list.querySelectorAll('.conj-speak-btn').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); speak(b.dataset.pl,false); }));
+  list.querySelectorAll('.conj-toggle-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const panel = document.getElementById('conjpanel-'+b.dataset.id);
+      if(panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+  list.querySelectorAll('.toggle-include-btn').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const id = b.dataset.id;
+      if(excluded[id]) delete excluded[id]; else excluded[id]=true;
+      await saveKey(STORAGE.excluded, excluded);
+      renderWordList(); updateDueCount();
+    });
+  });
+  list.querySelectorAll('.delete-word-btn').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const id = b.dataset.id;
+      customWords = customWords.filter(w=>w.id!==id);
+      delete progress[id];
+      await saveKey(STORAGE.words, customWords);
+      await saveKey(STORAGE.progress, progress);
+      showToast('Word deleted');
+      buildCategoryChips(); buildWordFilterChips(); renderWordList(); updateDueCount(); renderProgress();
+    });
+  });
+}
+
+/* ================= PROGRESS VIEW ================= */
+function bindProgressView(){
+  document.getElementById('resetProgressBtn').addEventListener('click', async ()=>{
+    if(!confirm('Reset all practice progress? Your word lists stay intact.')) return;
+    progress = {};
+    await saveKey(STORAGE.progress, progress);
+    renderProgress();
+    showToast('Progress reset');
+  });
+}
+function renderProgress(){
+  const words = allWords();
+  document.getElementById('statTotal').textContent = words.length;
+  document.getElementById('statCustom').textContent = customWords.length;
+  const mastered = words.filter(w => (getProgress(w.id).box||0) >= 5).length;
+  document.getElementById('statMastered').textContent = mastered;
+  document.getElementById('statStreak').textContent = statsData.streak || 0;
+}
+
+init();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+
+})();
+</script>
+</body>
+</html>
